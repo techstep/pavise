@@ -15,3 +15,8 @@ The goal is to make this fairly low on requirements. A machine, VM, or container
 1. Create a virtual environment: `python -m venv venv`
 2. Start the virtual environment: `source venv/bin/activate`
 3. Install the Python packages: `pip install -r requirements.txt`
+
+## Further Documentation
+
+The `docs/` directory contains information about architecture, possible extensions, and so forth.
+
