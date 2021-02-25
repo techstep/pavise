@@ -1,5 +1,8 @@
-from pavise.pavise import app, init_db
+from pavise.pavise import create_app, init_db
 from pathlib import Path
+import os
+
+app = create_app(os.environ["FLASK_CONFIG"])
 
 def test_index():
     tester = app.test_client()
@@ -10,5 +13,5 @@ def test_index():
 
 
 def test_existence_of_database():
-    init_db()
+    init_db(app)
     assert Path("pavise.db").is_file()

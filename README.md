@@ -8,13 +8,18 @@ The general use case for Pavise is for a proxy. The proxy connects to Pavise, pa
 
 ## Requirements
 
-The goal is to make this fairly low on requirements. A machine, VM, or container with Python 3 is required.
+The goal is to make this fairly low on requirements. At the moment, the following are required:
+* Python 3, with a virtual environment;
+* A Docker installation.
 
 ## Installation
 
+To run locally:
 1. Create a virtual environment: `python -m venv venv`
 2. Start the virtual environment: `source venv/bin/activate`
-3. Install the Python packages: `pip install -r requirements.txt`
+3. Install the Python packages: `pip install -r requirements/development.txt`
+4. To run tests: `./manage.py test`
+5. To deploy in docker: `./manage.py compose up`
 
 ## Further Documentation
 
