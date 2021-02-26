@@ -47,10 +47,26 @@ For example, if access is slow, this could mean that the proxy is successfully s
 
 5. "Does that change anything you've done in the app?"
 
-This would require some changes to the application as currently designed. For example, as of now I do not have hooks into services for metrics, logging, and alerts.
+This would require some changes to the application as currently designed. For example, as of now I do not have hooks into services for metrics, logging, and alerts. Ensuring that there are keep-alives is another necessary component.
 
 6. "What are some considerations for the lifecycle of the app?"
 
+* Hooks for tracing and performance montitoring would be welcome, especially as the service was used more.
+* Determining what the service-level indicators are, which will inform our service-level objectives, and influence the SLAs we can reasonably offer, directly to the proxy team, and indirectly to customers.
+* Coming up with clear, consistent policies of when URLs get added and removed, and a process for appealing incorrectly filed URLs.
+* Devising policies for API changes, with an eye on making any changes not impact API signatures and results whenever possible.
+* Improving the testing strategy: more tests, make it easier to build and improve existing tests.
+* Regular evaluation of user experience; even though they do not directly interact with the app, problems in the app can severely cause problems in their experience.
+
 7. "You need to deploy a new version of the application. What do you do?"
 
-Assuming a fix or a feature has been written and locally tested
+Assuming a fix or a feature has been written and locally tested:
+* Make a PR, and have a code review.
+* Ensure that there are feature flags in place that work, so that if the new feature or fix fails, we can rapidly get to the previous version without another rollout.
+* If the changes require modifications to the API, let the maintainers of the proxy service have input, and give them ample time to make changes on their end.
+* If it passes the code review, merge it into `develop`.
+* Make sure that the suite of tests pass.
+
+Next is the deployment stage. Since this service is comparatively small, and not directly user-facing, deploying changes that do not break the API can be rolled out using, for example, rolling deployments in Kubernetes. As for getting the changes out to multiple clusters, that will likely depend upon what our overall multi-cluster management strategy would be.
+
+Deployments where the API breaks existing code are somewhat more complicated, as we need to take into account the development processes of the maintainers of the proxy. Again, we can use feature flags and API versioning to our advantage, as we can turn on those features in the new version when everyone is ready.
