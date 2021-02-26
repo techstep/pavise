@@ -52,4 +52,6 @@ This returns a JSON payload in the form of:
 Where:
 * `url` is the unencoded path (the normalized, encoded one is stored in the database);
 * `sha256_hash` is the generated hash;
-* `is_malware` is `true` if either the URL and the hash are in the database, and `false` otherwise.
+* `is_malware` is `true` if either the URL or the hash is in the database, and `false` otherwise.
+
+If there is a result, it will have the status code of `200`; if there are no results from the database, the request returns with a `500`. (**NB** This could be changed to a `503`, potentially.)
