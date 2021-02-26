@@ -8,6 +8,7 @@ services:
     environment:
       FLASK_ENV: ${FLASK_ENV}
       FLASK_CONFIG: ${FLASK_CONFIG}
+      APPLICATION_DB: ${APPLICATION_DB}
     command: flask run --host 0.0.0.0
     volumes:
       - ${PWD}:/opt/code

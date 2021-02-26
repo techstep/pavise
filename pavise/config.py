@@ -4,10 +4,10 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 class Config(object):
     """Base configuration"""
+    
+    database = os.environ["APPLICATION_DB"]
 
-    DATABASE = "pavise.db"
-
-class ProductionConfig(object):
+class ProductionConfig(Config):
     """Production configuration"""
 
 class DevelopmentConfig(Config):

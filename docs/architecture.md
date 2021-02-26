@@ -1,36 +1,46 @@
 # Pavise Architecture
 
-Pavise is a RESTful service that, given a URL, returns whether that URL is known to have malware.
+Pavise is a RESTful service that, given a URL, returns whether that URL is known to have malware. There are also routes to add and delete entries from the list.
 
 ## General Design
 
-The current assumption is that either a URL contains malware, or not. It is a binary determination, without a likelihood score attached to it.
+I make several assumptions in the design:
 
-Another assumption is that the number of URLs containing malware is a fraction of all possible URLs.
+1. A URL contains malware, or not. I am not looking in terms of a likelihood or propensity score; rather, I assume that the person or entity that adds in the URLs has the knowledge or belief that sites they are adding in contain malware.
 
-The design does not store the specific list of URLs; rather, it stores SHA-256 hashes. If the hashed 
+2. If a URL is not in the list, a user is permitted to access it. That is, the database is a restricted list, not a permitted list. (Another assumption embedded in this is that the number of malware-containing sites, if not known, is at least comparatively small to the number that do not.)
 
-We go through a normalization process:
+3. The maintainers of the proxy service are able to send the appropriate requests and parse the return data as in the specifications provided.
 
-1. We change URLs into all lower-case.
+4. The proxy is retaining the actual URL, as the scheme and authority information have been removed for this.
 
-One consequence of this is that this procedure is susceptible to false positives. As query strings and, say, base-64 strings are case-sensitive, the difference between one that actually contains malware and one that does it can hinge upon capitalization. By collapsing case, a URL would be marked as having malware regardless of capitalization.)
+5. At the outset, there is no authentication model, but this is something that could be added in (as noted in the [extensions document](extensions.md).)
 
-2. Query strings are sanitized using URLencode.
+6. A user will typically be checking one URL at a time. (That is, they're entering a URL into a web browser.) Automated processes are subject to the same proxies, but for the moment these will be handled one at a time as well.
 
-3. This string becomes the basis of a SHA-256 hash.
+The general process goes as follows, and much of it is the same for both adding and checking URLs.
 
-A SHA-256 hash takes 64 bytes.
+1. We change the paths into all lower-case. One consequence of this is that this procedure is susceptible to false positives. As query strings and, say, base-64 strings are case-sensitive, the difference between one that actually contains malware and one that does it can hinge upon capitalization. By collapsing case, a URL would be marked as having malware regardless of capitalization.)
 
-4. While SHA-256 collisions _can_ happen theoretically, the probability is small
+2. If a port is not included, we default to port 80. (There is an assumption here that there is a lower change of malware on HTTPS servers.)
+
+3. Query strings are sanitized using URLencode.
+
+4. This string becomes the basis of a SHA-256 hash.
+
+For searches, I check if both the normalized URL is in there, and the hashes match the entry in the database. If there is at least _one_ match among the URLs and the hashes, then that is considered a malware site. If neither matches, then there is not evidence of malware at the moment.
+
+For adding entries, the route determines if the URL has been previously added, and returns an error if there are matches.
+
+For removing entries, the URL and the hash must both match for a deletion to be successful.
 
 ## Routes
 
 Currently, we have one route:
 `GET /urlinfo/1/[hostname_and_port]/[original_path_and_query_string]`
 
+
+
 The states are:
 
-200 - The URL has been found in the database;
-404 - The URL cannot be found in the database;
-503 - 
+200 - The URL has been found in
