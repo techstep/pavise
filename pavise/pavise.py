@@ -24,8 +24,8 @@ def create_app(config_name):
         malware_hash = get_hash(encoded_path)
         
         check_result = {
-            url: malware_path,
-            sha256_hash: malware_hash
+            "url": malware_path,
+            "sha256_hash": malware_hash
         }
 
         # return 1 if either the URL or hash is in the db, 0 otherwise
@@ -45,7 +45,9 @@ def create_app(config_name):
                 )
                 return response
             else:
-                if results[0][0] = 1: # At least one component of the pair is in the database
+                print(results)
+                print(encoded_path)
+                if results[0][0] == 1: # At least one component of the pair is in the database
                     check_result["is_malware"] = True
                 else:
                     check_result["is_malware"] = False
@@ -83,7 +85,6 @@ def get_hash(path):
 def connect_db(app):
     """Connect to the database."""
     conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
     return conn
 
 
@@ -97,7 +98,7 @@ def init_db(app):
  
 
 def populate_db(app):
-    query f"INSERT INTO malware_sites (site_url, sha256_hash) VALUES (?, ?)"
+    query = "INSERT INTO malware_sites (site_url, sha256_hash) VALUES (?, ?)"
     with app.app_context():
         db = get_db(app)
         with app.open_resource("../tests/test_data.txt", mode="r") as f:
@@ -105,7 +106,7 @@ def populate_db(app):
             print(urls)
             for url in urls:
                 print(url)
-                path = url.split("//")[1]
+                path = url.split("//")[1].rstrip()
                 encoded_path = normalize_path(path)
                 path_hash = get_hash(encoded_path)
                 c = db.cursor()
