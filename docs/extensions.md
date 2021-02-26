@@ -22,7 +22,7 @@ Here are some thoughts I have had about the next steps:
 
 My current design involves using sqlite3, as it has built-in support in Python and has no external dependencies. The data model here is fairly simple at present, with a few fields and tables, so it should be adaptable with a bit of work to different database systems. While it can grow infinitely, very little is kept in memory on the machine, and the requests themselves do not involve much state that needs to be maintained, in memory or otherwise, beyond the length of the request.
 
-(**NB** if we were to store it in an in-memory cache, we could hold around 10 million URLs and their associated hashes in around 10GB of memory, possibly less depending on the data structures at hand.)
+(**NB** if we were to store it in an in-memory cache, we could hold around 5 million URLs and their associated caches in around 20GB of data. We can reduce this by removing timestamps, representing the hashes as 32-byte numbers, and so forth.)
 
 2. "Assume that the number of requests will exceed the capacity of a single system. Describe how might you solve this, and how might this change if you have to distribute this workload to an additional region, such as Europe."
 
@@ -31,6 +31,8 @@ The first pass of a solution would be to load balance requests between container
 What we need to ensure, in that case, is that as we increase the number of copies of the application running, we do not overload the database. Similarly, we will need to distribute the database, possibly using a cluster system like Galera for MySQL/MariaDB, or ClusterControl for PostgreSQL.
 
 Now, if we need to distribute this to additional regions, we could replicate the same process in each data center. (See #7 for deployment strategies.) The problem will be ensure that the data are identical across regions. We would need to make sure that our database sync strategies (which depend largely on the DBMS we are using) are up to the task. In our favor, the data changes are not overly large and continuous, and the hashes are not tied to specific ID numbering, so concerns about partition robustness and consistency are a little lower than other applications.
+
+Moreover, since the data should be the same all over the world, we could use a GSLB (global server load balancer) to route traffic accordingly; if the containers in one data center go down, the proxy's requests can go through a different one automatically, even if that one isn't necessarily close.
 
 3. "What are some strategies you might use to update the service with new URLs? Updates may be as much as 5 thousand URLs a day with updates arriving every 10 minutes."
 
