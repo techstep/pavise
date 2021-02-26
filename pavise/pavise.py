@@ -11,10 +11,6 @@ def create_app(config_name):
     config_module = f"pavise.config.{config_name.capitalize()}Config"
     app.config.from_object(config_module)
 
-    init_db(app)
-
-    populate_db(app)
-
     @app.route("/", methods=["GET"])
     def home():
         return "<h1>Welcome to Pavise</h1><p>This is a test to make sure things are working.</p>"
@@ -23,14 +19,38 @@ def create_app(config_name):
     @app.route("/urlinfo/1/", methods=["GET"], defaults={"url": ""})
     @app.route("/urlinfo/1/<path:url>", methods=["GET"])
     def check_for_malware(url):
-        print(f"base url: {request.url}")
         malware_path = get_malware_path(request.url)
-        print(f"malware path: {malware_path}")
         encoded_path = normalize_path(malware_path)
-        print(f"encoded path: {encoded_path}")
         malware_hash = get_hash(encoded_path)
-        print(f"resulting hash: {malware_hash}")
-        return malware_path
+        
+        check_result = {
+            url: malware_path,
+            sha256_hash: malware_hash
+        }
+
+        # return 1 if either the URL or hash is in the db, 0 otherwise
+        query = "SELECT count(*) FROM malware_sites WHERE site_url=? OR sha256_hash=? LIMIT 1"
+
+        with app.app_context():
+            db = get_db(app)
+            cur = db.cursor()
+            cur.execute(query, (encoded_path, malware_hash))
+
+            results = cur.fetchall()
+            # now, check if we have a result.
+            if len(results) != 1:
+                response = app.response_class(
+                    response = "Error in results",
+                    status = 500,
+                )
+                return response
+            else:
+                if results[0][0] = 1: # At least one component of the pair is in the database
+                    check_result["is_malware"] = True
+                else:
+                    check_result["is_malware"] = False
+
+                return jsonify(check_result)
 
     return app
 
@@ -59,6 +79,7 @@ def get_hash(path):
     hash = hashlib.sha256(bytes(path, encoding="utf8")).hexdigest()
     return hash
 
+
 def connect_db(app):
     """Connect to the database."""
     conn = sqlite3.connect(DATABASE)
@@ -67,6 +88,7 @@ def connect_db(app):
 
 
 def init_db(app):
+    """Create the database."""
     with app.app_context():
         db = get_db(app)
         with app.open_resource("pavise_schema.sql", mode="r") as f:
@@ -75,6 +97,7 @@ def init_db(app):
  
 
 def populate_db(app):
+    query f"INSERT INTO malware_sites (site_url, sha256_hash) VALUES (?, ?)"
     with app.app_context():
         db = get_db(app)
         with app.open_resource("../tests/test_data.txt", mode="r") as f:
@@ -86,10 +109,8 @@ def populate_db(app):
                 encoded_path = normalize_path(path)
                 path_hash = get_hash(encoded_path)
                 c = db.cursor()
-                # TODO: Fix the unsanitized SQL
-                sql_string =\
-                    f"INSERT INTO malware_sites (site_url, sha256_hash) VALUES ('{encoded_path}', '{path_hash}')"
-                c.execute(sql_string)
+
+                c.execute(query, encoded_path, path_hash)
         db.commit()
 
 

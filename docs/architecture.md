@@ -12,7 +12,7 @@ I make several assumptions in the design:
 
 3. The maintainers of the proxy service are able to send the appropriate requests and parse the return data as in the specifications provided.
 
-4. The proxy is retaining the actual URL, as the scheme and authority information have been removed for this.
+4. The proxy is retaining the actual URL, as the scheme and authority information have been removed for this. Morever, the proxy is able to cache results, so it need not make a request to Pavise each time a user wants to make a request to a URL. (A future extension could offer a time-to-live (TTL) metric for the requests, so that the proxy has a guaranteed caching time.)
 
 5. At the outset, there is no authentication model, but this is something that could be added in (as noted in the [extensions document](extensions.md).)
 
@@ -39,8 +39,17 @@ For removing entries, the URL and the hash must both match for a deletion to be 
 Currently, we have one route:
 `GET /urlinfo/1/[hostname_and_port]/[original_path_and_query_string]`
 
+This returns a JSON payload in the form of:
 
+```
+{
+    "url": "www.quiescentlyfrozenmalware.org/test?variable=stuff&variable2=things",
+    "sha256_hash": "a2e461802f5976b17b968dac38d7734742d3cb71288023a49a0c7d651e3940e6",
+    "is_malware: "True"
+}
+```
 
-The states are:
-
-200 - The URL has been found in
+Where:
+* `url` is the unencoded path (the normalized, encoded one is stored in the database);
+* `sha256_hash` is the generated hash;
+* `is_malware` is `true` if either the URL and the hash are in the database, and `false` otherwise.
