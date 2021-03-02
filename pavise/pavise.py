@@ -45,8 +45,6 @@ def create_app(config_name):
                 )
                 return response
             else:
-                print(results)
-                print(encoded_path)
                 if results[0][0] == 1: # At least one component of the pair is in the database
                     check_result["is_malware"] = True
                 else:
@@ -54,7 +52,39 @@ def create_app(config_name):
 
                 return jsonify(check_result)
 
+
+    @app.route("/urlinfo/admin", methods=["POST", "PUT"])
+    def add_new_site():
+        status = 500
+        if request.method == "POST":
+            posted_data = request.get_json()
+            if "site" in posted_data:
+                path = create_path_for_db(posted_data["site"])
+                escaped_path = normalize_path(path)
+                hash = get_hash(escaped_path)
+                
+                query = "INSERT INTO malware_sites (site_url, sha256_hash) VALUES (?, ?)"
+                db = get_db(app)
+                c = db.cursor()
+
+                c.execute(query, encoded_path, path_hash)
+                db.commit()
+                status = 200
+            response = app.response_class(status=status)
+        return response
+
     return app
+
+
+def create_path_for_db(url):
+    """This takes in a URL beginning with http:// or https://
+    and returns the remainder of the path."""
+
+    if url is not None:
+        new_path = url.split("://")[1]
+        return new_path
+
+    return None
 
 
 def get_malware_path(url):
@@ -102,17 +132,18 @@ def populate_db(app):
     with app.app_context():
         db = get_db(app)
         with app.open_resource("../tests/test_data.txt", mode="r") as f:
-            urls = f.read()
-            print(urls)
-            for url in urls:
+            for url in f:
                 print(url)
                 path = url.split("//")[1].rstrip()
                 encoded_path = normalize_path(path)
+                print(encoded_path)
                 path_hash = get_hash(encoded_path)
+                print(path_hash)
                 c = db.cursor()
-
-                c.execute(query, encoded_path, path_hash)
+                c.execute(query, (encoded_path, path_hash))
         db.commit()
+    # return the number of created records
+    return c.lastrowid
 
 
 def get_db(app):
