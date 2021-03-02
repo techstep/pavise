@@ -3,6 +3,10 @@ import sqlite3
 import urllib.parse
 import hashlib
 
+# NB There needs to be some error checking here.
+# It's kind of a first pass, and if I were doing this more formally,
+# I would be putting in more checks and exception handling.
+
 DATABASE="pavise.db"
 
 def create_app(config_name):
@@ -40,8 +44,8 @@ def create_app(config_name):
             # now, check if we have a result.
             if len(results) != 1:
                 response = app.response_class(
-                    response = "Error in results",
-                    status = 500,
+                    response = json.dumps({error: "No results, or no unique results"}),
+                    status = 500
                 )
                 return response
             else:
@@ -53,25 +57,26 @@ def create_app(config_name):
                 return jsonify(check_result)
 
 
-    @app.route("/urlinfo/admin", methods=["POST", "PUT"])
+    @app.route("/urlinfo/admin", methods=["POST"])
     def add_new_site():
-        status = 500
         if request.method == "POST":
             posted_data = request.get_json()
             if "site" in posted_data:
                 path = create_path_for_db(posted_data["site"])
                 escaped_path = normalize_path(path)
-                hash = get_hash(escaped_path)
+                path_hash = get_hash(escaped_path)
                 
                 query = "INSERT INTO malware_sites (site_url, sha256_hash) VALUES (?, ?)"
                 db = get_db(app)
                 c = db.cursor()
 
-                c.execute(query, encoded_path, path_hash)
+                c.execute(query, (escaped_path, path_hash))
                 db.commit()
-                status = 200
-            response = app.response_class(status=status)
-        return response
+                insert_result = {
+                    "url": path,
+                    "hash": path_hash
+                }
+        return jsonify(insert_result)
 
     return app
 

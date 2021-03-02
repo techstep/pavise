@@ -34,10 +34,27 @@ def test_if_url_is_malware():
 
 
 def test_url_is_not_malware():
-    url = "https://127.0.0.1:5000/urlinfo/1/www.cisco.com"
+    url = "http://127.0.0.1:5000/urlinfo/1/www.cisco.com"
     tester = app.test_client()
     response = tester.get(url)
-    
+
     assert response.status_code == 200
     result = json.loads(response.data)
     assert result["is_malware"] == False
+
+
+def test_can_insert_url():
+    url = "https://badsite.org"
+    headers = {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
+
+    site = {
+        "site": url
+    }    
+    tester = app.test_client()
+    response = tester.post("/urlinfo/admin", data=json.dumps(site), headers=headers)
+
+    assert response.content_type == "application/json"
+    assert response.json["hash"] == "b27b1508de40c33cc18aeaa945632dc3ffbc72c13e81cd214b154859abbc0c64"
