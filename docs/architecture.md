@@ -36,7 +36,7 @@ For removing entries, the URL and the hash must both match for a deletion to be 
 
 ## Routes
 
-Currently, we have one route:
+Currently, we have two routes:
 `GET /urlinfo/1/[hostname_and_port]/[original_path_and_query_string]`
 
 This returns a JSON payload in the form of:
@@ -55,3 +55,21 @@ Where:
 * `is_malware` is `true` if either the URL or the hash is in the database, and `false` otherwise.
 
 If there is a result, it will have the status code of `200`; if there are no results from the database, the request returns with a `500`. (**NB** This could be changed to a `503`, potentially.)
+
+`POST /urlinfo/admin`
+
+This accepts a JSON payload:
+```
+{
+  "site": "http://badsite.org"
+}
+```
+
+It's currently unauthenticated. It will return a JSON payload, with the URL and the hash:
+
+```
+{
+  "hash": "b27b1508de40c33cc18aeaa945632dc3ffbc72c13e81cd214b154859abbc0c64", 
+  "url": "badsite.org"
+}
+```
