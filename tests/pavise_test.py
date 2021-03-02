@@ -31,4 +31,13 @@ def test_if_url_is_malware():
     assert response.status_code == 200
     result = json.loads(response.data)
     assert result["is_malware"] == True
+
+
+def test_url_is_not_malware():
+    url = "https://127.0.0.1:5000/urlinfo/1/www.cisco.com"
+    tester = app.test_client()
+    response = tester.get(url)
     
+    assert response.status_code == 200
+    result = json.loads(response.data)
+    assert result["is_malware"] == False
